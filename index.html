@@ -51,12 +51,43 @@ textarea {
     padding: 15px;
     border-radius: 10px;
     min-height: 50px;
+    max-height: 200px;
     font-size: 15px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     word-break: break-all;
+    overflow-y: auto;
+    scrollbar-width: thin; /* for Firefox */
+    scrollbar-color: rgba(255,255,255,0.4) transparent; /* Firefox */
 }
+
+/* Webkit browsers (Chrome, Edge, Safari) */
+#resultContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+#resultContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#resultContainer::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.4);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+#resultContainer::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255,255,255,0.6);
+}
+
+#result {
+    text-align: left;
+    flex: 1;
+    white-space: pre-wrap;
+}
+
 
 #result {
     text-align: left;
@@ -115,11 +146,10 @@ textarea {
     <button class="button" onclick="decodeBase64()">Decode</button>
     <button class="reverse-btn" onclick="reverseText()">Reverse</button>
 
-    <div id="resultContainer">
-        <div id="result"></div>
-        <button class="copy-btn" onclick="copyResult(this)">Copy</button>
-    </div>
+<div id="resultContainer">
+    <div id="result"></div>
 </div>
+<button class="copy-btn" onclick="copyResult(this)">Copy</button>
 
 <script>
 const inputText = document.getElementById("inputText");
