@@ -171,6 +171,10 @@ textarea {
         <div class="tab" data-type="base32">Base32</div>
         <div class="tab" data-type="base58">Base58</div>
         <div class="tab" data-type="base64url">Base64Url</div>
+<div class="tab" data-type="ascii85">Ascii85</div>
+<div class="tab" data-type="z85">Z85</div>
+<div class="tab" data-type="base36">Base36</div>
+<div class="tab" data-type="base62">Base62</div>
 
     </div>
 
@@ -299,6 +303,131 @@ function decodeBase58(str) {
     return new TextDecoder().decode(bytes);
 }
 
+function encodeAscii85(input) {
+    let data = new TextEncoder().encode(input);
+    let output = "<~";
+    for (let i = 0; i < data.length; i += 4) {
+        let chunk = data.slice(i, i+4);
+        while (chunk.length < 4) chunk = new Uint8Array([...chunk, 0]);
+        let num = (chunk[0]<<24) + (chunk[1]<<16) + (chunk[2]<<8) + chunk[3];
+
+        if (num === 0) {
+            output += "z";
+        } else {
+            let block = "";
+            for (let j = 0; j < 5; j++) {
+                block = String.fromCharCode((num % 85) + 33) + block;
+                num = Math.floor(num / 85);
+            }
+            output += block;
+        }
+    }
+    return output + "~>";
+}
+
+function decodeAscii85(str) {
+    str = str.replace(/^<~/, "").replace(/~>$/, "").replace(/\s+/g, "");
+    let output = [];
+
+    for (let i = 0; i < str.length; i += 5) {
+        let chunk = str.slice(i, i+5);
+        let num = 0;
+
+        for (let j = 0; j < chunk.length; j++) {
+            num = num * 85 + (chunk.charCodeAt(j) - 33);
+        }
+
+        output.push(
+            (num >> 24) & 0xFF,
+            (num >> 16) & 0xFF,
+            (num >> 8) & 0xFF,
+            num & 0xFF
+        );
+    }
+    return new TextDecoder().decode(new Uint8Array(output));
+}
+
+const z85chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-:+=^!/*?&<>()[]{}@%$#";
+const z85map = Object.fromEntries([...z85chars].map((c,i)=>[c,i]));
+
+function encodeZ85(str) {
+    let bytes = [...new TextEncoder().encode(str)];
+    while (bytes.length % 4 !== 0) bytes.push(0);
+
+    let output = "";
+    for (let i = 0; i < bytes.length; i += 4) {
+        let value =
+            bytes[i] * 256**3 +
+            bytes[i+1] * 256**2 +
+            bytes[i+2] * 256 +
+            bytes[i+3];
+
+        let block = "";
+        for (let j = 0; j < 5; j++) {
+            block = z85chars[value % 85] + block;
+            value = Math.floor(value / 85);
+        }
+        output += block;
+    }
+    return output;
+}
+
+function decodeZ85(str) {
+    let output = [];
+
+    for (let i = 0; i < str.length; i += 5) {
+        let value = 0;
+        for (let j = 0; j < 5; j++) {
+            value = value * 85 + z85map[str[i+j]];
+        }
+
+        output.push(
+            (value >> 24) & 255,
+            (value >> 16) & 255,
+            (value >> 8) & 255,
+            value & 255
+        );
+    }
+    return new TextDecoder().decode(new Uint8Array(output));
+}
+
+function encodeBase36(str) {
+    let hex = Array.from(new TextEncoder().encode(str))
+        .map(b=>b.toString(16).padStart(2,"0"))
+        .join("");
+    return BigInt("0x" + hex).toString(36);
+}
+
+function decodeBase36(str) {
+    let hex = BigInt("0x" + BigInt("0").toString(16)).toString(16);
+    hex = BigInt("0x" + BigInt(str, 36).toString(16)).toString(16);
+    if (hex.length % 2) hex = "0" + hex;
+    let bytes = new Uint8Array(hex.match(/.{2}/g).map(x=>parseInt(x,16)));
+    return new TextDecoder().decode(bytes);
+}
+
+const base62chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+function encodeBase62(str) {
+    let bytes = [...new TextEncoder().encode(str)];
+    let num = BigInt("0x" + bytes.map(b=>b.toString(16).padStart(2,"0")).join(""));
+    let out = "";
+    while (num > 0n) {
+        out = base62chars[Number(num % 62n)] + out;
+        num /= 62n;
+    }
+    return out;
+}
+
+function decodeBase62(str) {
+    let num = 0n;
+    for (let c of str) num = num * 62n + BigInt(base62chars.indexOf(c));
+    let hex = num.toString(16);
+    if (hex.length % 2) hex = "0" + hex;
+    let bytes = new Uint8Array(hex.match(/.{2}/g).map(h=>parseInt(h,16)));
+    return new TextDecoder().decode(bytes);
+}
+
 function encodeBase64Url(str) {
     return btoa(unescape(encodeURIComponent(str)))
         .replace(/\+/g,"-")
@@ -329,6 +458,11 @@ function encodeText() {
         case "base32": resultDiv.innerText = encodeBase32(input); break;
         case "base58": resultDiv.innerText = encodeBase58(input); break;
         case "base64url": resultDiv.innerText = encodeBase64Url(input); break;
+case "ascii85": resultDiv.innerText = encodeAscii85(input); break;
+case "z85": resultDiv.innerText = encodeZ85(input); break;
+case "base36": resultDiv.innerText = encodeBase36(input); break;
+case "base62": resultDiv.innerText = encodeBase62(input); break;
+
     }
 }
 
@@ -346,6 +480,11 @@ function decodeText() {
         case "morse": try{const revMorse=Object.fromEntries(Object.entries(morseMap).map(([k,v])=>[v,k])); resultDiv.innerText=input.split(' ').map(c=>revMorse[c]||'').join('');} catch{resultDiv.innerText="Invalid Morse input";} break;
         case "binary": try{resultDiv.innerText = input.split(' ').map(b=>String.fromCharCode(parseInt(b,2))).join('');} catch{resultDiv.innerText="Invalid Binary input";} break;
         case "octal": try{resultDiv.innerText = input.split(' ').map(o=>String.fromCharCode(parseInt(o,8))).join('');} catch{resultDiv.innerText="Invalid Octal input";} break;
+case "ascii85": resultDiv.innerText = decodeAscii85(input); break;
+case "z85": resultDiv.innerText = decodeZ85(input); break;
+case "base36": resultDiv.innerText = decodeBase36(input); break;
+case "base62": resultDiv.innerText = decodeBase62(input); break;
+
     }
 }
 
