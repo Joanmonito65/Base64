@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base64</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #fff;
+}
+
+.container {
+    background-color: rgba(0,0,0,0.75);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+textarea {
+    width: 100%;
+    height: 120px;
+    padding: 15px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    resize: none;
+    margin-bottom: 20px;
+}
+
+#resultContainer {
+    margin-top: 20px;
+    background-color: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 10px;
+    min-height: 50px;
+    font-size: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    word-break: break-all;
+}
+
+#result {
+    text-align: left;
+    flex: 1;
+}
+
+.button, .copy-btn, .reverse-btn {
+    color: #fff;
+    border: none;
+    padding: 12px 25px;
+    margin: 5px;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Bluish-purple buttons: Encode, Decode, Copy */
+.button, .copy-btn {
+    background-color: #6c4dff;
+}
+
+.button:hover, .copy-btn:hover {
+    background-color: #570ed4;
+    transform: translateY(-1px);
+}
+
+/* Reddish-orange Reverse button */
+.reverse-btn {
+    background-color: #ff9800;
+}
+
+.reverse-btn:hover {
+    background-color: #f96540;
+    transform: translateY(-1px);
+}
+
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+}
+
+.button.copied, .copy-btn.copied {
+    animation: pop 0.28s ease;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Base64 Encoder/Decoder</h1>
+    <textarea id="inputText" placeholder="Enter text or Base64 here"></textarea>
+    <br>
+    <button class="button" onclick="encodeBase64()">Encode</button>
+    <button class="button" onclick="decodeBase64()">Decode</button>
+    <button class="reverse-btn" onclick="reverseText()">Reverse</button>
+
+    <div id="resultContainer">
+        <div id="result"></div>
+        <button class="copy-btn" onclick="copyResult(this)">Copy</button>
+    </div>
+</div>
+
+<script>
+const inputText = document.getElementById("inputText");
+const resultDiv = document.getElementById("result");
+
+// Encode Base64
+function encodeBase64() {
+    const input = inputText.value;
+    if (!input) {
+        resultDiv.innerText = "";
+        return;
+    }
+    try {
+        resultDiv.innerText = btoa(unescape(encodeURIComponent(input)));
+    } catch {
+        resultDiv.innerText = "Error encoding text";
+    }
+}
+
+// Decode Base64
+function decodeBase64() {
+    const input = inputText.value;
+    if (!input) {
+        resultDiv.innerText = "";
+        return;
+    }
+    try {
+        resultDiv.innerText = decodeURIComponent(escape(atob(input)));
+    } catch {
+        resultDiv.innerText = "Error: Invalid Base64 input";
+    }
+}
+
+// Copy button animation
+function copyResult(button) {
+    const text = resultDiv.innerText;
+    if (!text) return;
+
+    navigator.clipboard.writeText(text).then(() => {
+        animateCopyButton(button);
+    });
+}
+
+// Only this function triggers the pop animation
+function animateCopyButton(button) {
+    button.classList.add("copied");
+    setTimeout(() => button.classList.remove("copied"), 280);
+}
+
+// Auto-update
+let mode = "encode";
+inputText.addEventListener("input", () => {
+    if (mode === "encode") encodeBase64();
+    else decodeBase64();
+});
+
+// Switch mode when clicking buttons
+document.querySelectorAll(".button")[0].addEventListener("click", () => mode = "encode");
+document.querySelectorAll(".button")[1].addEventListener("click", () => mode = "decode");
+
+// Reverse function
+function reverseText() {
+    const temp = inputText.value;
+    inputText.value = resultDiv.innerText;
+    resultDiv.innerText = temp;
+    mode = mode === "encode" ? "decode" : "encode";
+    // Update result immediately after reversing
+    if (mode === "encode") encodeBase64();
+    else decodeBase64();
+}
+</script>
+
+</body>
+</html>
