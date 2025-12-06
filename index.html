@@ -194,6 +194,8 @@ textarea {
         <div class="tab" data-type="baconian">Baconian</div>
         <div class="tab" data-type="railfence">Rail Fence</div>
         <div class="tab" data-type="polybius">Polybius</div>
+        <div class="tab" data-type="studly">Studly Caps</div>
+        <div class="tab" data-type="studlylower">Studly Lower</div>
 
     </div>
 
@@ -407,6 +409,44 @@ function vigenereDecrypt(text, key = "KEY") {
 
 function reverse(str) {
     return str.split("").reverse().join("");
+}
+
+function studlyEncode(str) {
+    let out = "";
+    let upper = true;
+    for (let c of str) {
+        if (/[a-z]/i.test(c)) {
+            out += upper ? c.toUpperCase() : c.toLowerCase();
+            upper = !upper;
+        } else {
+            out += c;
+        }
+    }
+    return out;
+}
+
+function studlyDecode(str) {
+    return str.toLowerCase();
+}
+
+// Studly Caps starting lowercase first
+function studlyLowerEncode(str) {
+    let out = "";
+    let upper = false; // start with lowercase
+    for (let c of str) {
+        if (/[a-z]/i.test(c)) {
+            out += upper ? c.toUpperCase() : c.toLowerCase();
+            upper = !upper;
+        } else {
+            out += c;
+        }
+    }
+    return out;
+}
+
+// Decoding: just convert all to lowercase
+function studlyLowerDecode(str) {
+    return str.toLowerCase();
 }
 
 const base58charsCheck = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -821,6 +861,8 @@ function encodeText() {
             break;
         }
         case "reverse": resultDiv.innerText = reverse(input); break;
+        case "studly": resultDiv.innerText = studlyEncode(input); break;
+        case "studlylower": resultDiv.innerText = studlyLowerEncode(input); break;
 
     }
 }
@@ -868,7 +910,9 @@ function decodeText() {
                 break;
             }
             case "reverse": resultDiv.innerText = reverse(input); break;
-            default: resultDiv.innerText = "Unknown decode type"; break;
+            case "studly": resultDiv.innerText = studlyDecode(input); break;
+            case "studlylower": resultDiv.innerText = studlyLowerDecode(input); break;
+
         }
     } catch (e) {
         resultDiv.innerText = `Error decoding ${currentType}: ${e.message || e}`;
