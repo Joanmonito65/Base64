@@ -429,10 +429,9 @@ function studlyDecode(str) {
     return str.toLowerCase();
 }
 
-// Studly Caps starting lowercase first
 function studlyLowerEncode(str) {
     let out = "";
-    let upper = false; // start with lowercase
+    let upper = false;
     for (let c of str) {
         if (/[a-z]/i.test(c)) {
             out += upper ? c.toUpperCase() : c.toLowerCase();
@@ -444,7 +443,6 @@ function studlyLowerEncode(str) {
     return out;
 }
 
-// Decoding: just convert all to lowercase
 function studlyLowerDecode(str) {
     return str.toLowerCase();
 }
@@ -563,11 +561,18 @@ function substitution(str) {
     });
 }
 
+const baconianTable = [
+  "A","B","C","D","E","F","G","H","I","K",
+  "L","M","N","O","P","Q","R","S","T","U",
+  "W","X","Y","Z"
+];
+
 function baconianEncode(str) {
-    const a = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let out = "";
     for (let c of str.toUpperCase()) {
-        const i = a.indexOf(c);
+        if (c === "J") c = "I";
+        if (c === "V") c = "U";
+        const i = baconianTable.indexOf(c);
         if (i === -1) out += c;
         else out += i.toString(2).padStart(5, "0").replace(/0/g, "A").replace(/1/g, "B");
     }
@@ -576,12 +581,12 @@ function baconianEncode(str) {
 
 function baconianDecode(str) {
     let out = "";
-    str = str.replace(/[^AB]/g, "");
+    str = str.replace(/[^AB]/gi, "");
     for (let i = 0; i < str.length; i += 5) {
-        const chunk = str.slice(i, i+5);
+        const chunk = str.slice(i, i + 5);
         if (chunk.length < 5) break;
-        const val = parseInt(chunk.replace(/A/g,"0").replace(/B/g,"1"), 2);
-        out += String.fromCharCode(65 + val);
+        const val = parseInt(chunk.replace(/A/g, "0").replace(/B/g, "1"), 2);
+        out += baconianTable[val] || "?";
     }
     return out;
 }
@@ -668,16 +673,14 @@ function decodeAscii85(str) {
     return new TextDecoder().decode(new Uint8Array(output));
 }
 
-function encodeROT13(str) {
-    return str.replace(/[A-Za-z]/g, c =>
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"[
-            ("NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm".indexOf(c))
-        ]
-    );
-}
+function rot13(str) {
+    return str.replace(/[A-Za-z]/g, c => {
 
-function decodeROT13(str) {
-    return encodeROT13(str);
+        const code = c.charCodeAt(0);
+        if (code >= 65 && code <= 90) return String.fromCharCode(((code - 65 + 13) % 26) + 65);
+        if (code >= 97 && code <= 122) return String.fromCharCode(((code - 97 + 13) % 26) + 97);
+        return c;
+    });
 }
 
 function encodeURLBase64(str) {
