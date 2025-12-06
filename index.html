@@ -177,6 +177,10 @@ textarea {
         <div class="tab" data-type="base62">Base62</div>
         <div class="tab" data-type="base58check">Base58Check</div>
         <div class="tab" data-type="binhex">BinHex</div>
+        <div class="tab" data-type="rot13">ROT13</div>
+        <div class="tab" data-type="urlbase64">URL-Safe Base64</div>
+        <div class="tab" data-type="utf8">UTF-8 Bytes</div>
+        <div class="tab" data-type="binary16">Binary16</div>
 
     </div>
 
@@ -382,6 +386,48 @@ function decodeAscii85(str) {
     return new TextDecoder().decode(new Uint8Array(output));
 }
 
+function encodeROT13(str) {
+    return str.replace(/[A-Za-z]/g, c =>
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"[
+            ("NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm".indexOf(c))
+        ]
+    );
+}
+
+function decodeROT13(str) {
+    return encodeROT13(str);
+}
+
+function encodeURLBase64(str) {
+    return encodeBase64Url(str);
+}
+
+function decodeURLBase64(str) {
+    return decodeBase64Url(str);
+}
+
+function encodeUTF8Bytes(str) {
+    return Array.from(new TextEncoder().encode(str)).join(' ');
+}
+
+function decodeUTF8Bytes(str) {
+    return new TextDecoder().decode(
+        new Uint8Array(str.split(' ').map(n => parseInt(n)))
+    );
+}
+
+function encodeBinary16(str) {
+    return Array.from(str).map(c =>
+        c.charCodeAt(0).toString(2).padStart(16,'0')
+    ).join(' ');
+}
+
+function decodeBinary16(str) {
+    return str.split(' ').map(b =>
+        String.fromCharCode(parseInt(b,2))
+    ).join('');
+}
+
 const z85chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-:+=^!/*?&<>()[]{}@%$#";
 const z85map = Object.fromEntries([...z85chars].map((c,i)=>[c,i]));
 
@@ -512,6 +558,10 @@ function encodeText() {
         case "base62": resultDiv.innerText = encodeBase62(input); break;
         case "base58check": encodeBase58Check(input).then(res=>resultDiv.innerText=res); break;
         case "binhex": resultDiv.innerText = encodeBinHex(input); break;
+        case "rot13": resultDiv.innerText = encodeROT13(input); break;
+        case "urlbase64": resultDiv.innerText = encodeURLBase64(input); break;
+        case "utf8": resultDiv.innerText = encodeUTF8Bytes(input); break;
+        case "binary16": resultDiv.innerText = encodeBinary16(input); break;
 
     }
 }
@@ -537,6 +587,10 @@ function decodeText() {
         case "base62": resultDiv.innerText = decodeBase62(input); break;
         case "base58check": resultDiv.innerText = decodeBase58Check(input); break;
         case "binhex": resultDiv.innerText = decodeBinHex(input); break;
+        case "rot13": resultDiv.innerText = decodeROT13(input); break;
+        case "urlbase64": resultDiv.innerText = decodeURLBase64(input); break;
+        case "utf8": resultDiv.innerText = decodeUTF8Bytes(input); break;
+        case "binary16": resultDiv.innerText = decodeBinary16(input); break;
 
     }
 }
